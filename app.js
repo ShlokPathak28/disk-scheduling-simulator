@@ -45,6 +45,29 @@ function validateInput(requests, headPosition, maxCylinder) {
     return "";
 }
 
+function updateControlState() {
+    const algorithm = document.getElementById("algorithm").value;
+    const directionSelect = document.getElementById("direction");
+    const directionHint = document.getElementById("directionHint");
+
+    if (algorithm === "FCFS" || algorithm === "SSTF") {
+        directionSelect.disabled = true;
+        directionHint.textContent = "Direction is ignored for FCFS and SSTF.";
+        return;
+    }
+
+    directionSelect.disabled = false;
+    directionHint.textContent = algorithm === "ALL"
+        ? "Used by SCAN and C-SCAN during comparison."
+        : "Used by SCAN and C-SCAN.";
+}
+
+function updateInputSummary(input) {
+    const summary = document.getElementById("inputSummary");
+    const mode = input.algorithm === "ALL" ? "comparing all algorithms" : `running ${input.algorithm}`;
+    summary.textContent = `${input.requests.length} requests loaded, head at ${input.headPosition}, max cylinder ${input.maxCylinder}, ${mode}.`;
+}
+
 function getSimulationInput() {
     const requestQueue = document.getElementById("requestQueue").value;
     const headPosition = Number(document.getElementById("headPosition").value);
@@ -241,6 +264,7 @@ function runSimulation() {
     }
 
     showError("");
+    updateInputSummary(input);
     const results = runSelectedAlgorithms(input);
     const selectedMode = input.algorithm === "ALL" ? "Compare All" : input.algorithm;
 
@@ -259,6 +283,7 @@ function loadSample() {
     document.getElementById("maxCylinder").value = sample.maxCylinder;
     document.getElementById("direction").value = sample.direction;
     document.getElementById("algorithm").value = "ALL";
+    updateControlState();
     showError("");
     runSimulation();
 }
@@ -270,6 +295,7 @@ function resetSimulator() {
     document.getElementById("maxCylinder").value = 199;
     document.getElementById("direction").value = "right";
     document.getElementById("algorithm").value = "ALL";
+    updateControlState();
     document.getElementById("selectedMode").textContent = "Compare All";
     document.getElementById("bestAlgorithm").textContent = "Not Run";
     document.getElementById("bestSeek").textContent = "0";
@@ -284,6 +310,7 @@ function resetSimulator() {
     `;
     document.getElementById("resultCards").innerHTML = `<p class="empty-state">No simulation has been run yet.</p>`;
     showError("");
+    document.getElementById("inputSummary").textContent = "Load the sample data or enter your own queue to begin.";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -292,7 +319,9 @@ document.addEventListener("DOMContentLoaded", () => {
         runSimulation();
     });
 
+    document.getElementById("algorithm").addEventListener("change", updateControlState);
     document.getElementById("sampleButton").addEventListener("click", loadSample);
     document.getElementById("resetButton").addEventListener("click", resetSimulator);
+    updateControlState();
     loadSample();
 });

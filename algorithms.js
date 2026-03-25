@@ -1,193 +1,148 @@
-// Disk Scheduling Algorithms
+function calculateMetrics(path, requestCount) {
+    let totalSeekDistance = 0;
 
-/**
- * FCFS (First Come First Served)
- * @param {number[]} requests - Array of cylinder numbers
- * @param {number} head - Initial head position
- * @param {string} [direction] - Not used in FCFS
- * @param {number} [max_cylinder] - Not used in FCFS
- * @returns {{sequence: number[], totalSeek: number}}
- */
-function FCFS(requests, head, direction, max_cylinder) {
-  let sequence = [];
-  let totalSeek = 0;
-  let current = head;
-
-  // If no requests, return empty sequence and zero seek
-  if (requests.length === 0) {
-    return { sequence, totalSeek };
-  }
-
-  // Process each request in order
-  for (let i = 0; i < requests.length; i++) {
-    const request = requests[i];
-    sequence.push(request);
-    totalSeek += Math.abs(current - request);
-    current = request;
-  }
-
-  return { sequence, totalSeek };
-}
-
-/**
- * SSTF (Shortest Seek Time First)
- * @param {number[]} requests - Array of cylinder numbers
- * @param {number} head - Initial head position
- * @param {string} [direction] - Not used in SSTF
- * @param {number} [max_cylinder] - Not used in SSTF
- * @returns {{sequence: number[], totalSeek: number}}
- */
-function SSTF(requests, head, direction, max_cylinder) {
-  let sequence = [];
-  let totalSeek = 0;
-  let current = head;
-  const remaining = [...requests]; // Copy of requests to mark as serviced
-
-  while (remaining.length > 0) {
-    // Find the index of the request with minimum seek distance from current head
-    let minIndex = 0;
-    let minDistance = Math.abs(current - remaining[0]);
-
-    for (let i = 1; i < remaining.length; i++) {
-      const distance = Math.abs(current - remaining[i]);
-      // If tie, choose the one with lower cylinder number (for determinism)
-      if (distance < minDistance || (distance === minDistance && remaining[i] < remaining[minIndex])) {
-        minDistance = distance;
-        minIndex = i;
-      }
+    for (let index = 1; index < path.length; index += 1) {
+        totalSeekDistance += Math.abs(path[index] - path[index - 1]);
     }
 
-    // Service the selected request
-    const next = remaining.splice(minIndex, 1)[0];
-    sequence.push(next);
-    totalSeek += minDistance;
-    current = next;
-  }
-
-  return { sequence, totalSeek };
+    return {
+        totalSeekDistance,
+        averageSeekTime: requestCount > 0 ? totalSeekDistance / requestCount : 0,
+        throughput: totalSeekDistance > 0 ? requestCount / totalSeekDistance : 0
+    };
 }
 
-/**
- * SCAN (Elevator Algorithm)
- * @param {number[]} requests - Array of cylinder numbers
- * @param {number} head - Initial head position
- * @param {string} direction - 'left' for decreasing cylinder numbers, 'right' for increasing
- * @param {number} max_cylinder - Maximum cylinder number (e.g., 199)
- * @returns {{sequence: number[], totalSeek: number}}
- */
-function SCAN(requests, head, direction, max_cylinder) {
-  let sequence = [];
-  let totalSeek = 0;
-  let current = head;
-  const left = [];  // Requests less than head
-  const right = []; // Requests greater than or equal to head
+function createResult(name, path, sequence, requestCount, meta = {}) {
+    return {
+        algorithm: name,
+        path,
+        sequence,
+        requestCount,
+        ...calculateMetrics(path, requestCount),
+        ...meta
+    };
+}
 
-  // Separate requests into left and right of the head
-  for (let i = 0; i < requests.length; i++) {
-    if (requests[i] < head) {
-      left.push(requests[i]);
+function fcfs(requests, headPosition) {
+    const sequence = [...requests];
+    const path = [headPosition, ...sequence];
+    return createResult("FCFS", path, sequence, requests.length);
+}
+
+function sstf(requests, headPosition) {
+    const remaining = [...requests];
+    const sequence = [];
+    const path = [headPosition];
+    let currentHead = headPosition;
+
+    while (remaining.length > 0) {
+        let nearestIndex = 0;
+        let nearestDistance = Math.abs(currentHead - remaining[0]);
+
+        for (let index = 1; index < remaining.length; index += 1) {
+            const distance = Math.abs(currentHead - remaining[index]);
+
+            if (distance < nearestDistance || (distance === nearestDistance && remaining[index] < remaining[nearestIndex])) {
+                nearestDistance = distance;
+                nearestIndex = index;
+            }
+        }
+
+        const nextRequest = remaining.splice(nearestIndex, 1)[0];
+        sequence.push(nextRequest);
+        path.push(nextRequest);
+        currentHead = nextRequest;
+    }
+
+    return createResult("SSTF", path, sequence, requests.length);
+}
+
+function scan(requests, headPosition, direction, maxCylinder) {
+    const left = requests.filter((request) => request < headPosition).sort((a, b) => b - a);
+    const right = requests.filter((request) => request >= headPosition).sort((a, b) => a - b);
+    const sequence = direction === "left" ? [...left, ...right] : [...right, ...left];
+    const path = [headPosition];
+
+    if (direction === "left") {
+        path.push(...left);
+        if (path[path.length - 1] !== 0) {
+            path.push(0);
+        }
+        path.push(...right);
     } else {
-      right.push(requests[i]);
+        path.push(...right);
+        if (path[path.length - 1] !== maxCylinder) {
+            path.push(maxCylinder);
+        }
+        path.push(...left);
     }
-  }
 
-  // Sort left in descending order (so we go from highest to lowest when moving left)
-  left.sort((a, b) => b - a);
-  // Sort right in ascending order (so we go from lowest to highest when moving right)
-  right.sort((a, b) => a - b);
-
-  let sequenceLeft = [];
-  let sequenceRight = [];
-
-  if (direction === 'left') {
-    // Go left first, then right
-    sequenceLeft = left;
-    sequenceRight = right;
-  } else { // direction === 'right'
-    // Go right first, then left
-    sequenceLeft = right;
-    sequenceRight = left;
-  }
-
-  // Combine the sequences: first the direction we start, then the other
-  sequence = [...sequenceLeft, ...sequenceRight];
-
-  // Calculate total seek distance
-  if (sequence.length > 0) {
-    totalSeek += Math.abs(current - sequence[0]); // From head to first request
-    for (let i = 1; i < sequence.length; i++) {
-      totalSeek += Math.abs(sequence[i - 1] - sequence[i]);
-    }
-  }
-
-  return { sequence, totalSeek };
+    return createResult("SCAN", path, sequence, requests.length, { direction });
 }
 
-/**
- * C-SCAN (Circular SCAN)
- * @param {number[]} requests - Array of cylinder numbers
- * @param {number} head - Initial head position
- * @param {string} direction - 'left' for decreasing cylinder numbers, 'right' for increasing
- * @param {number} max_cylinder - Maximum cylinder number (e.g., 199)
- * @returns {{sequence: number[], totalSeek: number}}
- */
-function CScan(requests, head, direction, max_cylinder) {
-  let sequence = [];
-  let totalSeek = 0;
-  let current = head;
+function cscan(requests, headPosition, direction, maxCylinder) {
+    const leftAscending = requests.filter((request) => request < headPosition).sort((a, b) => a - b);
+    const rightAscending = requests.filter((request) => request >= headPosition).sort((a, b) => a - b);
+    const leftDescending = [...leftAscending].sort((a, b) => b - a);
+    const rightDescending = [...rightAscending].sort((a, b) => b - a);
+    const path = [headPosition];
+    let sequence;
 
-  if (direction === 'right') {
-    // Forward: requests >= head, sorted ascending
-    // Backward: requests < head, sorted ascending
-    const forward = requests.filter(r => r >= head).sort((a, b) => a - b);
-    const backward = requests.filter(r => r < head).sort((a, b) => a - b);
-    sequence = [...forward, ...backward];
-  } else { // direction === 'left'
-    // Forward: requests <= head, sorted descending
-    // Backward: requests > head, sorted descending
-    const forward = requests.filter(r => r <= head).sort((a, b) => b - a);
-    const backward = requests.filter(r => r > head).sort((a, b) => b - a);
-    sequence = [...forward, ...backward];
-  }
-
-  // Calculate total seek distance
-  if (sequence.length > 0) {
-    totalSeek += Math.abs(current - sequence[0]); // From head to first request in sequence
-    for (let i = 1; i < sequence.length; i++) {
-      totalSeek += Math.abs(sequence[i - 1] - sequence[i]);
+    if (direction === "left") {
+        sequence = [...leftDescending, ...rightDescending];
+        path.push(...leftDescending);
+        if (path[path.length - 1] !== 0) {
+            path.push(0);
+        }
+        path.push(maxCylinder);
+        path.push(...rightDescending);
+    } else {
+        sequence = [...rightAscending, ...leftAscending];
+        path.push(...rightAscending);
+        if (path[path.length - 1] !== maxCylinder) {
+            path.push(maxCylinder);
+        }
+        path.push(0);
+        path.push(...leftAscending);
     }
-  }
 
-  return { sequence, totalSeek };
+    return createResult("C-SCAN", path, sequence, requests.length, { direction });
 }
 
-// Export functions for use in other files (if using modules)
-// Since we are using plain HTML script tags, we'll attach to window if needed.
-// But for now, we just define them globally.
-// In the HTML, we are including this file directly, so they will be in global scope.
+function runAllAlgorithms({ requests, headPosition, maxCylinder, direction }) {
+    return [
+        fcfs(requests, headPosition),
+        sstf(requests, headPosition),
+        scan(requests, headPosition, direction, maxCylinder),
+        cscan(requests, headPosition, direction, maxCylinder)
+    ];
+}
 
-// If we want to export for Node or ES modules, we can do:
-// module.exports = { FCFS, SSTF, SCAN, CScan };
-// But since we are in browser, we'll just leave them as global.
-
-// However, to avoid polluting global scope too much, we can create a namespace.
-// Let's attach to window.diskSchedulingAlgorithms if window exists.
-// For simplicity in this project, we'll just leave them as global and hope there are no conflicts.
-
-// Alternatively, we can define them as properties of an object and then assign that object to window.
-const diskSchedulingAlgorithms = {
-  FCFS,
-  SSTF,
-  SCAN,
-  CScan
+const schedulerBlueprint = {
+    algorithms: ["FCFS", "SSTF", "SCAN", "C-SCAN"],
+    metrics: ["totalSeekDistance", "averageSeekTime", "throughput"],
+    sampleInput: {
+        requests: [98, 183, 37, 122, 14, 124, 65, 67],
+        headPosition: 53,
+        maxCylinder: 199,
+        direction: "right"
+    }
 };
 
-// Attach to window if available (browser)
-if (typeof window !== 'undefined') {
-  window.diskSchedulingAlgorithms = diskSchedulingAlgorithms;
+const diskSchedulingAlgorithms = {
+    fcfs,
+    sstf,
+    scan,
+    cscan,
+    runAllAlgorithms,
+    schedulerBlueprint
+};
+
+if (typeof window !== "undefined") {
+    window.schedulerBlueprint = schedulerBlueprint;
+    window.diskSchedulingAlgorithms = diskSchedulingAlgorithms;
 }
 
-// Also export for Node.js if needed
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = diskSchedulingAlgorithms;
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = diskSchedulingAlgorithms;
 }

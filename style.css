@@ -226,6 +226,13 @@ table th {
     font-size: 0.92rem;
 }
 
+.input-summary {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
 .dashboard {
     display: grid;
     gap: 20px;
