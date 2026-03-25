@@ -1,63 +1,44 @@
 # Disk Scheduling Simulator
 
-An interactive HTML, CSS, and JavaScript simulator for visualizing `FCFS`, `SSTF`, `SCAN`, and `C-SCAN` disk scheduling algorithms with seek time and throughput analysis.
+An HTML, CSS, and JavaScript project to simulate disk scheduling algorithms such as `FCFS`, `SSTF`, `SCAN`, and `C-SCAN`.
 
-## Features
+## Day 1 Scope
 
-- Enter a custom disk request queue
-- Set the initial head position and maximum cylinder
-- Choose `FCFS`, `SSTF`, `SCAN`, `C-SCAN`, or compare all at once
-- View total seek distance, average seek time, and throughput
-- Inspect service order and full head path
-- Compare algorithms with a line plot and performance bars
+Day 1 is only for planning and project setup.
 
-## Project Files
+- Finalize the project title and objective
+- Choose the technology stack
+- Decide inputs and outputs
+- Decide the algorithms to implement later
+- Create the basic file structure
+- Prepare the UI layout plan
+
+## Planned Inputs
+
+- Request queue
+- Initial head position
+- Maximum cylinder number
+- Direction for `SCAN` and `C-SCAN`
+- Algorithm selection
+
+## Planned Outputs
+
+- Service sequence
+- Head movement path
+- Total seek distance
+- Average seek time
+- Throughput
+
+## File Structure
 
 ```text
 os-project/
 ├─ index.html
 ├─ style.css
 ├─ app.js
-├─ algorithms.js
-└─ verify-algorithms.js
+└─ algorithms.js
 ```
 
-## How to Run
+## Next Step
 
-1. Open `index.html` in a browser.
-2. Enter a comma-separated request queue.
-3. Set the head position, max cylinder, direction, and algorithm.
-4. Click `Run Simulation`.
-
-Use `Load Sample` to populate the standard sample queue:
-
-```text
-98, 183, 37, 122, 14, 124, 65, 67
-```
-
-## Sample Results
-
-For the default sample input with head position `53`, max cylinder `199`, and direction `right`:
-
-- `FCFS`: `640`
-- `SSTF`: `236`
-- `SCAN`: `331`
-- `C-SCAN`: `382`
-
-`SSTF` gives the lowest seek distance for that sample.
-
-## Verification
-
-Run the algorithm checks with:
-
-```bash
-node verify-algorithms.js
-```
-
-This verifies:
-
-- the standard sample case
-- single-request behavior
-- repeated-request behavior
-- `SCAN` left-direction sequencing
-- `C-SCAN` wraparound behavior
+Day 2 will implement the disk scheduling algorithms in JavaScript.

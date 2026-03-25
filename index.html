@@ -10,51 +10,41 @@
     <main class="app-shell">
         <section class="hero-panel">
             <div>
-                <p class="eyebrow">Disk Scheduling Simulator</p>
-                <h1>Test FCFS, SSTF, SCAN, and C-SCAN with your own requests.</h1>
-                <p class="hero-copy">
-                    Enter a request queue, choose one algorithm or compare all of them, and inspect
-                    seek distance, average seek time, throughput, and head movement.
+                <p class="eyebrow">Day 1 Setup</p>
+                <h1>Disk Scheduling Simulator</h1>
+                <p class="lead">
+                    Base interface and project structure for running `FCFS`, `SSTF`, `SCAN`, and `C-SCAN`
+                    with custom disk requests.
                 </p>
             </div>
-            <div class="hero-stat-strip">
-                <div class="hero-stat">
-                    <span>Algorithms</span>
-                    <strong>4</strong>
-                </div>
-                <div class="hero-stat">
-                    <span>Mode</span>
-                    <strong>Interactive</strong>
-                </div>
-                <div class="hero-stat">
-                    <span>Focus</span>
-                    <strong>Seek Analysis</strong>
-                </div>
+            <div class="hero-badges">
+                <span class="badge">UI Scaffold</span>
+                <span class="badge">Input Ready</span>
+                <span class="badge">Logic Next</span>
             </div>
         </section>
 
         <section class="workspace">
-            <aside class="control-panel card">
+            <aside class="panel control-panel">
                 <div class="section-heading">
-                    <p class="eyebrow">Inputs</p>
-                    <h2>Simulation Controls</h2>
+                    <p class="eyebrow">Controls</p>
+                    <h2>Simulation Input</h2>
                 </div>
 
-                <form id="simulatorForm" class="control-form">
+                <form id="setupForm" class="form-grid">
                     <label class="field">
                         <span>Request Queue</span>
-                        <textarea id="requestQueue" rows="4" placeholder="98, 183, 37, 122, 14, 124, 65, 67"></textarea>
-                        <small>Enter cylinder numbers separated by commas.</small>
+                        <textarea id="requestQueue" rows="5" placeholder="98, 183, 37, 122, 14, 124, 65, 67"></textarea>
                     </label>
 
                     <div class="field-row">
                         <label class="field">
                             <span>Initial Head</span>
-                            <input id="headPosition" type="number" min="0" value="53">
+                            <input id="headPosition" type="number" value="53" min="0">
                         </label>
                         <label class="field">
                             <span>Max Cylinder</span>
-                            <input id="maxCylinder" type="number" min="1" value="199">
+                            <input id="maxCylinder" type="number" value="199" min="1">
                         </label>
                     </div>
 
@@ -65,7 +55,6 @@
                                 <option value="right">Right</option>
                                 <option value="left">Left</option>
                             </select>
-                            <small id="directionHint">Used by SCAN and C-SCAN.</small>
                         </label>
                         <label class="field">
                             <span>Algorithm</span>
@@ -80,88 +69,70 @@
                     </div>
 
                     <div class="button-row">
-                        <button id="runButton" type="submit" class="primary-button">Run Simulation</button>
-                        <button id="sampleButton" type="button" class="secondary-button">Load Sample</button>
+                        <button id="sampleButton" type="button" class="primary-button">Load Sample</button>
                         <button id="resetButton" type="button" class="ghost-button">Reset</button>
+                        <button type="button" class="disabled-button" disabled>Run Simulation on Day 2</button>
                     </div>
 
-                    <p id="errorMessage" class="error-message" aria-live="polite"></p>
-                    <p id="inputSummary" class="input-summary">Load the sample data or enter your own queue to begin.</p>
+                    <p id="statusText" class="status-text">
+                        Day 1 only sets up the interface. Algorithm execution will be added next.
+                    </p>
                 </form>
             </aside>
 
             <section class="dashboard">
-                <div class="metric-strip">
-                    <article class="metric-card">
-                        <span>Selected Mode</span>
-                        <strong id="selectedMode">Compare All</strong>
-                    </article>
-                    <article class="metric-card">
-                        <span>Best Algorithm</span>
-                        <strong id="bestAlgorithm">Not Run</strong>
-                    </article>
-                    <article class="metric-card">
-                        <span>Lowest Seek</span>
-                        <strong id="bestSeek">0</strong>
-                    </article>
-                    <article class="metric-card">
-                        <span>Highest Throughput</span>
-                        <strong id="bestThroughput">0.0000</strong>
-                    </article>
-                </div>
-
-                <article class="card chart-card">
+                <article class="panel metrics-panel">
                     <div class="section-heading">
-                        <p class="eyebrow">Visualization</p>
-                        <h2>Head Movement Plot</h2>
+                        <p class="eyebrow">Output Area</p>
+                        <h2>Metrics Placeholder</h2>
                     </div>
-                    <div id="chartLegend" class="chart-legend"></div>
-                    <svg id="movementChart" class="movement-chart" viewBox="0 0 960 360" role="img" aria-label="Head movement chart"></svg>
-                </article>
-
-                <article class="card table-card">
-                    <div class="section-heading">
-                        <p class="eyebrow">Results</p>
-                        <h2>Algorithm Comparison</h2>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Algorithm</th>
-                                    <th>Sequence</th>
-                                    <th>Total Seek</th>
-                                    <th>Avg Seek</th>
-                                    <th>Throughput</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resultTableBody">
-                                <tr>
-                                    <td colspan="5" class="empty-state">Run the simulator to see results.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <span>Total Seek</span>
+                            <strong>--</strong>
+                        </div>
+                        <div class="metric-card">
+                            <span>Average Seek</span>
+                            <strong>--</strong>
+                        </div>
+                        <div class="metric-card">
+                            <span>Throughput</span>
+                            <strong>--</strong>
+                        </div>
                     </div>
                 </article>
 
-                <article class="card comparison-card">
+                <article class="panel chart-panel">
                     <div class="section-heading">
-                        <p class="eyebrow">Performance View</p>
-                        <h2>Seek and Throughput Snapshot</h2>
+                        <p class="eyebrow">Visualization Area</p>
+                        <h2>Head Movement Placeholder</h2>
                     </div>
-                    <div id="comparisonBars" class="comparison-bars">
-                        <p class="empty-state">Run the simulator to compare performance visually.</p>
+                    <div class="chart-placeholder">
+                        <span>Chart will be connected after algorithm logic is implemented.</span>
                     </div>
                 </article>
 
-                <article class="card detail-card">
+                <article class="panel table-panel">
                     <div class="section-heading">
-                        <p class="eyebrow">Selected Output</p>
-                        <h2>Head Path Details</h2>
+                        <p class="eyebrow">Comparison Area</p>
+                        <h2>Results Table Placeholder</h2>
                     </div>
-                    <div id="resultCards" class="result-cards">
-                        <p class="empty-state">No simulation has been run yet.</p>
-                    </div>
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>Algorithm</th>
+                                <th>Sequence</th>
+                                <th>Total Seek</th>
+                                <th>Avg Seek</th>
+                                <th>Throughput</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" class="empty-state">No results yet. Day 2 will connect the algorithms.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </article>
             </section>
         </section>
