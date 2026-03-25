@@ -1,247 +1,298 @@
-// Disk Scheduling Simulator - Main Application Logic
+const COLORS = {
+    FCFS: "#1f6f8b",
+    SSTF: "#b84e2d",
+    SCAN: "#4f772d",
+    "C-SCAN": "#7a4cc2"
+};
 
-// Wait for DOM to load
-document.addEventListener('DOMContentLoaded', () => {
-  // Get DOM elements
-  const requestQueueInput = document.getElementById('requestQueue');
-  const algoFCFS = document.getElementById('algoFCFS');
-  const algoSSTF = document.getElementById('algoSSTF');
-  const algoSCAN = document.getElementById('algoSCAN');
-  const algoCSCAN = document.getElementById('algoCSCAN');
-  const headPositionInput = document.getElementById('headPosition');
-  const diskSizeInput = document.getElementById('diskSize');
-  const dirLeft = document.getElementById('dirLeft');
-  const dirRight = document.getElementById('dirRight');
-  const speedSlider = document.getElementById('speedSlider');
-  const runButton = document.getElementById('runButton');
-  const randomButton = document.getElementById('randomButton');
-  const nextButton = document.getElementById('nextButton');
-  const pauseButton = document.getElementById('pauseButton');
-  const resumeButton = document.getElementById('resumeButton');
-  const resetButton = document.getElementById('resetButton');
-  const stepControls = document.getElementById('stepControls');
-  const seekChartCanvas = document.getElementById('seekChart');
-  const totalSeekEl = document.getElementById('totalSeek');
-  const avgSeekEl = document.getElementById('avgSeek');
-  const throughputEl = document.getElementById('throughput');
-  const comparisonTableBody = document.getElementById('tableBody');
+function formatNumber(value, digits = 2) {
+    return Number(value).toFixed(digits);
+}
 
-  // Chart.js instance
-  let seekChart = null;
-  let chartData = {
-    labels: [], // step indices
-    datasets: [] // one dataset per algorithm
-  };
+function parseQueue(rawValue) {
+    return rawValue
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0)
+        .map((entry) => Number(entry));
+}
 
-  // Simulation state
-  let simulationState = {
-    isRunning: false,
-    isPaused: false,
-    currentStep: 0,
-    algorithmResults: {}, // {algorithmName: {sequence, totalSeek}}
-    currentAlgorithm: null,
-    animationInterval: null,
-    speed: 3 // 1-5 from slider
-  };
+function validateInput(requests, headPosition, maxCylinder) {
+    if (requests.length === 0) {
+        return "Enter at least one disk request.";
+    }
 
-  // Initialize Chart.js
-  function initChart() {
-    const ctx = seekChartCanvas.getContext('2d');
-    seekChart = new Chart(ctx, {
-      type: 'line',
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: {
-          duration: 0 // We'll handle animation manually
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            suggestedMax: parseInt(diskSizeInput.value) || 199
-          },
-          x: {
-            display: true,
-            title: {
-              display: true,
-              text: 'Step'
-            }
-          },
-          y: {
-            display: true,
-            title: {
-              display: true,
-              text: 'Cylinder Number'
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            position: 'top'
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false
-          }
-        }
-      }
+    if (requests.some((request) => Number.isNaN(request) || !Number.isInteger(request))) {
+        return "Request queue must contain only integers.";
+    }
+
+    if (!Number.isInteger(headPosition) || headPosition < 0) {
+        return "Initial head position must be a non-negative integer.";
+    }
+
+    if (!Number.isInteger(maxCylinder) || maxCylinder <= 0) {
+        return "Max cylinder must be an integer greater than 0.";
+    }
+
+    if (headPosition > maxCylinder) {
+        return "Initial head position cannot exceed the max cylinder.";
+    }
+
+    if (requests.some((request) => request < 0 || request > maxCylinder)) {
+        return `Every request must be between 0 and ${maxCylinder}.`;
+    }
+
+    return "";
+}
+
+function getSimulationInput() {
+    const requestQueue = document.getElementById("requestQueue").value;
+    const headPosition = Number(document.getElementById("headPosition").value);
+    const maxCylinder = Number(document.getElementById("maxCylinder").value);
+    const direction = document.getElementById("direction").value;
+    const algorithm = document.getElementById("algorithm").value;
+
+    return {
+        requests: parseQueue(requestQueue),
+        headPosition,
+        maxCylinder,
+        direction,
+        algorithm
+    };
+}
+
+function runSelectedAlgorithms(input) {
+    const api = window.diskSchedulingAlgorithms;
+
+    if (input.algorithm === "ALL") {
+        return api.runAllAlgorithms(input);
+    }
+
+    const map = {
+        FCFS: () => api.fcfs(input.requests, input.headPosition),
+        SSTF: () => api.sstf(input.requests, input.headPosition),
+        SCAN: () => api.scan(input.requests, input.headPosition, input.direction, input.maxCylinder),
+        "C-SCAN": () => api.cscan(input.requests, input.headPosition, input.direction, input.maxCylinder)
+    };
+
+    return [map[input.algorithm]()];
+}
+
+function updateTopMetrics(results, selectedMode) {
+    const lowestSeek = [...results].sort((left, right) => left.totalSeekDistance - right.totalSeekDistance)[0];
+    const highestThroughput = [...results].sort((left, right) => right.throughput - left.throughput)[0];
+
+    document.getElementById("selectedMode").textContent = selectedMode;
+    document.getElementById("bestAlgorithm").textContent = lowestSeek.algorithm;
+    document.getElementById("bestSeek").textContent = String(lowestSeek.totalSeekDistance);
+    document.getElementById("bestThroughput").textContent = formatNumber(highestThroughput.throughput, 4);
+}
+
+function renderTable(results) {
+    const tableBody = document.getElementById("resultTableBody");
+    const bestSeek = Math.min(...results.map((result) => result.totalSeekDistance));
+    tableBody.innerHTML = results.map((result) => `
+        <tr class="${result.totalSeekDistance === bestSeek ? "is-best" : ""}">
+            <td>${result.algorithm}</td>
+            <td>${result.sequence.join(", ")}</td>
+            <td>${result.totalSeekDistance}</td>
+            <td>${formatNumber(result.averageSeekTime)}</td>
+            <td>${formatNumber(result.throughput, 4)}</td>
+        </tr>
+    `).join("");
+}
+
+function renderResultCards(results) {
+    const resultCards = document.getElementById("resultCards");
+    resultCards.innerHTML = results.map((result) => `
+        <article class="result-card">
+            <div class="result-card-header">
+                <div>
+                    <p class="eyebrow">${result.algorithm}</p>
+                    <h2>${result.algorithm} Output</h2>
+                </div>
+                <span class="result-badge">${result.totalSeekDistance} tracks</span>
+            </div>
+            <p class="sequence-text"><strong>Service sequence:</strong> ${result.sequence.join(" -> ")}</p>
+            <p class="path-text"><strong>Head path:</strong> ${result.path.join(" -> ")}</p>
+            <div class="result-meta">
+                <div>
+                    <span>Total Seek</span>
+                    <strong>${result.totalSeekDistance}</strong>
+                </div>
+                <div>
+                    <span>Average Seek</span>
+                    <strong>${formatNumber(result.averageSeekTime)}</strong>
+                </div>
+                <div>
+                    <span>Throughput</span>
+                    <strong>${formatNumber(result.throughput, 4)}</strong>
+                </div>
+            </div>
+        </article>
+    `).join("");
+}
+
+function renderLegend(results) {
+    const legend = document.getElementById("chartLegend");
+    legend.innerHTML = results.map((result) => `
+        <span class="legend-item">
+            <span class="legend-swatch" style="background:${COLORS[result.algorithm]};"></span>
+            ${result.algorithm}
+        </span>
+    `).join("");
+}
+
+function renderComparisonBars(results) {
+    const barTarget = document.getElementById("comparisonBars");
+    const maxSeek = Math.max(...results.map((result) => result.totalSeekDistance), 1);
+    const maxThroughput = Math.max(...results.map((result) => result.throughput), 1);
+
+    barTarget.innerHTML = results.map((result) => {
+        const seekWidth = (result.totalSeekDistance / maxSeek) * 100;
+        const throughputWidth = (result.throughput / maxThroughput) * 100;
+
+        return `
+            <article class="bar-card">
+                <div class="bar-card-header">
+                    <strong>${result.algorithm}</strong>
+                    <span class="result-badge">${result.totalSeekDistance} seek</span>
+                </div>
+                <div class="bar-metric">
+                    <div class="bar-metric-label">
+                        <span>Seek Distance</span>
+                        <span>${result.totalSeekDistance}</span>
+                    </div>
+                    <div class="bar-track">
+                        <span class="bar-fill" style="width:${seekWidth}%; background:${COLORS[result.algorithm]};"></span>
+                    </div>
+                </div>
+                <div class="bar-metric">
+                    <div class="bar-metric-label">
+                        <span>Throughput</span>
+                        <span>${formatNumber(result.throughput, 4)}</span>
+                    </div>
+                    <div class="bar-track">
+                        <span class="bar-fill" style="width:${throughputWidth}%; background:${COLORS[result.algorithm]};"></span>
+                    </div>
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+function renderChart(results, maxCylinder) {
+    const chart = document.getElementById("movementChart");
+    const width = 960;
+    const height = 360;
+    const padding = { top: 24, right: 24, bottom: 38, left: 52 };
+    const innerWidth = width - padding.left - padding.right;
+    const innerHeight = height - padding.top - padding.bottom;
+    const longestPath = Math.max(...results.map((result) => result.path.length), 2);
+    const xStep = longestPath > 1 ? innerWidth / (longestPath - 1) : innerWidth;
+    const yScale = maxCylinder > 0 ? innerHeight / maxCylinder : innerHeight;
+    let markup = "";
+
+    for (let tick = 0; tick <= 4; tick += 1) {
+        const yValue = Math.round((maxCylinder / 4) * tick);
+        const y = padding.top + innerHeight - (yValue * yScale);
+        markup += `<line class="grid-line" x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}"></line>`;
+        markup += `<text class="axis-label" x="${padding.left - 12}" y="${y + 4}" text-anchor="end">${yValue}</text>`;
+    }
+
+    for (let step = 0; step < longestPath; step += 1) {
+        const x = padding.left + step * xStep;
+        markup += `<line class="grid-line" x1="${x}" y1="${padding.top}" x2="${x}" y2="${height - padding.bottom}"></line>`;
+        markup += `<text class="axis-label" x="${x}" y="${height - 12}" text-anchor="middle">${step}</text>`;
+    }
+
+    markup += `<text class="axis-label" x="${width / 2}" y="${height - 4}" text-anchor="middle">Service Step</text>`;
+    markup += `<text class="axis-label" x="16" y="${height / 2}" text-anchor="middle" transform="rotate(-90 16 ${height / 2})">Cylinder</text>`;
+
+    results.forEach((result) => {
+        const points = result.path.map((value, index) => {
+            const x = padding.left + index * xStep;
+            const y = padding.top + innerHeight - (value * yScale);
+            return { x, y, value };
+        });
+
+        markup += `<polyline class="path-line" points="${points.map((point) => `${point.x},${point.y}`).join(" ")}" stroke="${COLORS[result.algorithm]}"></polyline>`;
+        markup += points.map((point) => `
+            <circle class="path-point" cx="${point.x}" cy="${point.y}" r="4.5" fill="${COLORS[result.algorithm]}">
+                <title>${result.algorithm}: cylinder ${point.value}</title>
+            </circle>
+        `).join("");
     });
-  }
 
-  // Update chart Y-axis max based on disk size
-  function updateChartYAxis(max) {
-    if (seekChart) {
-      seekChart.options.scales.y.suggestedMax = max;
-      seekChart.update('none');
-    }
-  }
+    chart.innerHTML = markup;
+}
 
-  // Parse comma-separated input into integer array
-  function parseRequestQueue(input) {
-    if (!input || input.trim() === '') return [];
-    // Split by comma, trim each part, filter out empty strings, convert to numbers
-    return input.split(',')
-      .map(part => part.trim())
-      .filter(part => part !== '')
-      .map(part => {
-        const num = parseInt(part, 10);
-        return isNaN(num) ? null : num;
-      })
-      .filter(num => num !== null); // Remove invalid numbers
-  }
+function showError(message) {
+    document.getElementById("errorMessage").textContent = message;
+}
 
-  // Validate requests: ensure they are within [0, diskSize]
-  function validateRequests(requests, diskSize) {
-    const invalid = requests.filter(r => r < 0 || r > diskSize);
-    return invalid.length === 0 ? [] : invalid;
-  }
+function runSimulation() {
+    const input = getSimulationInput();
+    const validationError = validateInput(input.requests, input.headPosition, input.maxCylinder);
 
-  // Get selected algorithms
-  function getSelectedAlgorithms() {
-    const selected = [];
-    if (algoFCFS.checked) selected.push('FCFS');
-    if (algoSSTF.checked) selected.push('SSTF');
-    if (algoSCAN.checked) selected.push('SCAN');
-    if (algoCSCAN.checked) selected.push('C-SCAN');
-    return selected;
-  }
-
-  // Get direction
-  function getDirection() {
-    return dirLeft.checked ? 'left' : 'right';
-  }
-
-  // Run the selected algorithms and update UI
-  function runSimulation() {
-    // Get input values
-    const requestQueue = parseRequestQueue(requestQueueInput.value);
-    const headPosition = parseInt(headPositionInput.value, 10);
-    const diskSize = parseInt(diskSizeInput.value, 10);
-    const direction = getDirection();
-    const selectedAlgos = getSelectedAlgorithms();
-
-    // Basic validation
-    if (requestQueue.length === 0) {
-      alert('Please enter a valid request queue (comma-separated numbers).');
-      return;
-    }
-    if (isNaN(headPosition) || headPosition < 0 || headPosition > diskSize) {
-      alert(`Please enter a valid head position between 0 and ${diskSize}.`);
-      return;
-    }
-    if (isNaN(diskSize) || diskSize <= 0) {
-      alert('Please enter a valid disk size greater than 0.');
-      return;
-    }
-    const invalidRequests = validateRequests(requestQueue, diskSize);
-    if (invalidRequests.length > 0) {
-      alert(`The following requests are out of range [0-${diskSize}]: ${invalidRequests.join(', ')}`);
-      return;
-    }
-    if (selectedAlgos.length === 0) {
-      alert('Please select at least one algorithm.');
-      return;
+    if (validationError) {
+        showError(validationError);
+        return;
     }
 
-    // Reset simulation state
-    simulationState.isRunning = true;
-    simulationState.isPaused = false;
-    simulationState.currentStep = 0;
-    simulationState.algorithmResults = {};
-    simulationState.speed = parseInt(speedSlider.value, 10);
+    showError("");
+    const results = runSelectedAlgorithms(input);
+    const selectedMode = input.algorithm === "ALL" ? "Compare All" : input.algorithm;
 
-    // Update chart Y-axis
-    updateChartYAxis(diskSize);
+    updateTopMetrics(results, selectedMode);
+    renderTable(results);
+    renderResultCards(results);
+    renderLegend(results);
+    renderComparisonBars(results);
+    renderChart(results, input.maxCylinder);
+}
 
-    // Run each selected algorithm
-    selectedAlgos.forEach(algo => {
-      let result;
-      switch (algo) {
-        case 'FCFS':
-          result = FCFS(requestQueue, headPosition);
-          break;
-        case 'SSTF':
-          result = SSTF(requestQueue, headPosition);
-          break;
-        case 'SCAN':
-          result = SCAN(requestQueue, headPosition, direction, diskSize);
-          break;
-        case 'C-SCAN':
-          result = CScan(requestQueue, headPosition, direction, diskSize);
-          break;
-        default:
-          return;
-      }
-      simulationState.algorithmResults[algo] = result;
+function loadSample() {
+    const sample = window.schedulerBlueprint.sampleInput;
+    document.getElementById("requestQueue").value = sample.requests.join(", ");
+    document.getElementById("headPosition").value = sample.headPosition;
+    document.getElementById("maxCylinder").value = sample.maxCylinder;
+    document.getElementById("direction").value = sample.direction;
+    document.getElementById("algorithm").value = "ALL";
+    showError("");
+    runSimulation();
+}
+
+function resetSimulator() {
+    document.getElementById("simulatorForm").reset();
+    document.getElementById("requestQueue").value = "";
+    document.getElementById("headPosition").value = 53;
+    document.getElementById("maxCylinder").value = 199;
+    document.getElementById("direction").value = "right";
+    document.getElementById("algorithm").value = "ALL";
+    document.getElementById("selectedMode").textContent = "Compare All";
+    document.getElementById("bestAlgorithm").textContent = "Not Run";
+    document.getElementById("bestSeek").textContent = "0";
+    document.getElementById("bestThroughput").textContent = "0.0000";
+    document.getElementById("chartLegend").innerHTML = "";
+    document.getElementById("movementChart").innerHTML = "";
+    document.getElementById("comparisonBars").innerHTML = `<p class="empty-state">Run the simulator to compare performance visually.</p>`;
+    document.getElementById("resultTableBody").innerHTML = `
+        <tr>
+            <td colspan="5" class="empty-state">Run the simulator to see results.</td>
+        </tr>
+    `;
+    document.getElementById("resultCards").innerHTML = `<p class="empty-state">No simulation has been run yet.</p>`;
+    showError("");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("simulatorForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        runSimulation();
     });
 
-    // Update UI
-    updateMetrics();
-    updateComparisonTable();
-    initializeChart();
-    startAnimation();
-  }
-
-  // Update metrics dashboard (for the first algorithm or combined?)
-  // We'll show metrics for the first selected algorithm for simplicity
-  function updateMetrics() {
-    const selectedAlgos = getSelectedAlgorithms();
-    if (selectedAlgos.length === 0) return;
-    const firstAlgo = selectedAlgos[0];
-    const result = simulationState.algorithmResults[firstAlgo];
-    if (!result) return;
-
-    totalSeekEl.textContent = result.totalSeek;
-    const avg = result.totalSeek / requestQueueInput.value.split(',').filter(v => v.trim() !== '').length;
-    avgSeekEl.textContent = avg.toFixed(2);
-    const throughput = result.totalSeek > 0 ? (requestQueue.length / result.totalSeek).toFixed(2) : 0;
-    throughputEl.textContent = throughput;
-  }
-
-  // Update comparison table with all algorithms
-  function updateComparisonTable() {
-    // Clear existing rows
-    comparisonTableBody.innerHTML = '';
-
-    const selectedAlgos = getSelectedAlgorithms();
-    const requestQueue = parseRequestQueue(requestQueueInput.value);
-    const requestCount = requestQueue.length;
-
-    selectedAlgos.forEach(algo => {
-      const result = simulationState.algorithmResults[algo];
-      if (!result) return;
-
-      const row = document.createElement('tr');
-
-      // Algorithm name
-      const algoCell = document.createElement('td');
-      algoCell.textContent = algo;
-      algoCell.className = 'px-3 py-2';
-      row.appendChild(algoCell);
-
-      // Sequence (truncate if too long)
-      const seqCell = document.createElement('td');
-      const seqStr = result.sequence.join(', ');
-      seqCell.textContent = seqStr.length > 50 ? seqStr.substring(0, 50) + '...' : seqStr;
-      seq
+    document.getElementById("sampleButton").addEventListener("click", loadSample);
+    document.getElementById("resetButton").addEventListener("click", resetSimulator);
+    loadSample();
+});
