@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
         maxCylinder.value = "199";
         direction.value = "right";
         algorithm.value = "ALL";
-        statusText.textContent = "Sample input loaded. Day 2 will connect this form to the algorithms.";
+        statusText.textContent = "Sample input loaded. Day 2 algorithm logic is ready; Day 3 will connect this form to the output panels.";
     });
 
     resetButton.addEventListener("click", () => {
@@ -23,6 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
         maxCylinder.value = "199";
         direction.value = "right";
         algorithm.value = "ALL";
-        statusText.textContent = "Inputs reset. Day 1 setup is ready.";
+        statusText.textContent = "Inputs reset. Day 2 now covers only the algorithm engine.";
     });
 });
