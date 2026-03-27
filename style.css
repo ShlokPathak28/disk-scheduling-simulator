@@ -177,8 +177,7 @@ td {
 }
 
 .primary-button,
-.ghost-button,
-.disabled-button {
+.ghost-button {
     border-radius: 999px;
     padding: 11px 18px;
     font: inherit;
@@ -196,12 +195,6 @@ td {
     background: transparent;
     color: var(--ink);
     cursor: pointer;
-}
-
-.disabled-button {
-    border: 0;
-    background: #d8d2ca;
-    color: #7b756d;
 }
 
 .status-text {
@@ -258,6 +251,25 @@ th {
 
 .empty-state {
     text-align: center;
+}
+
+.result-detail {
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.detail-block + .detail-block {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.detail-block strong {
+    color: var(--ink);
+}
+
+.error-text {
+    color: #b42318;
 }
 
 @media (max-width: 820px) {

@@ -10,7 +10,7 @@
     <main class="app-shell">
         <section class="hero-panel">
             <div>
-                <p class="eyebrow">Day 2 Progress</p>
+                <p class="eyebrow">Day 3 Progress</p>
                 <h1>Disk Scheduling Simulator</h1>
                 <p class="lead">
                     Base interface and project structure for running `FCFS`, `SSTF`, `SCAN`, and `C-SCAN`
@@ -18,7 +18,7 @@
                 </p>
             </div>
             <div class="hero-badges">
-                <span class="badge">UI Scaffold</span>
+                <span class="badge">UI Connected</span>
                 <span class="badge">Input Ready</span>
                 <span class="badge">Algorithms Ready</span>
             </div>
@@ -71,7 +71,7 @@
                     <div class="button-row">
                         <button id="sampleButton" type="button" class="primary-button">Load Sample</button>
                         <button id="resetButton" type="button" class="ghost-button">Reset</button>
-                        <button type="button" class="disabled-button" disabled>Run Simulation on Day 3</button>
+                        <button id="runButton" type="submit" class="primary-button">Run Simulation</button>
                     </div>
 
                     <p id="statusText" class="status-text">
@@ -89,15 +89,15 @@
                     <div class="metric-grid">
                         <div class="metric-card">
                             <span>Total Seek</span>
-                            <strong>--</strong>
+                            <strong id="totalSeekValue">--</strong>
                         </div>
                         <div class="metric-card">
                             <span>Average Seek</span>
-                            <strong>--</strong>
+                            <strong id="averageSeekValue">--</strong>
                         </div>
                         <div class="metric-card">
                             <span>Throughput</span>
-                            <strong>--</strong>
+                            <strong id="throughputValue">--</strong>
                         </div>
                     </div>
                 </article>
@@ -107,8 +107,8 @@
                         <p class="eyebrow">Visualization Area</p>
                         <h2>Head Movement Placeholder</h2>
                     </div>
-                    <div class="chart-placeholder">
-                        <span>Chart will be connected after algorithm logic is implemented.</span>
+                    <div id="chartPlaceholder" class="chart-placeholder">
+                        <span>Day 4 will turn this area into a head movement graph. Day 3 only shows the computed path as text.</span>
                     </div>
                 </article>
 
@@ -127,12 +127,22 @@
                                 <th>Throughput</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="resultsTableBody">
                             <tr>
                                 <td colspan="5" class="empty-state">Algorithm logic exists now, but Day 3 will wire these results into the interface.</td>
                             </tr>
                         </tbody>
                     </table>
+                </article>
+
+                <article class="panel detail-panel">
+                    <div class="section-heading">
+                        <p class="eyebrow">Result Details</p>
+                        <h2>Selected Output</h2>
+                    </div>
+                    <div id="resultDetail" class="result-detail">
+                        <p class="empty-state">Run the simulator to inspect service sequence and head path.</p>
+                    </div>
                 </article>
             </section>
         </section>
