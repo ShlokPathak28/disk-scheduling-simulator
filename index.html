@@ -10,7 +10,7 @@
     <main class="app-shell">
         <section class="hero-panel">
             <div>
-                <p class="eyebrow">Day 3 Progress</p>
+                <p class="eyebrow">Day 4 Progress</p>
                 <h1>Disk Scheduling Simulator</h1>
                 <p class="lead">
                     Base interface and project structure for running `FCFS`, `SSTF`, `SCAN`, and `C-SCAN`
@@ -19,7 +19,7 @@
             </div>
             <div class="hero-badges">
                 <span class="badge">UI Connected</span>
-                <span class="badge">Input Ready</span>
+                <span class="badge">Visualization Ready</span>
                 <span class="badge">Algorithms Ready</span>
             </div>
         </section>
@@ -105,11 +105,10 @@
                 <article class="panel chart-panel">
                     <div class="section-heading">
                         <p class="eyebrow">Visualization Area</p>
-                        <h2>Head Movement Placeholder</h2>
+                        <h2>Head Movement Graph</h2>
                     </div>
-                    <div id="chartPlaceholder" class="chart-placeholder">
-                        <span>Day 4 will turn this area into a head movement graph. Day 3 only shows the computed path as text.</span>
-                    </div>
+                    <div id="chartLegend" class="chart-legend"></div>
+                    <svg id="movementChart" class="movement-chart" viewBox="0 0 960 360" role="img" aria-label="Head movement graph"></svg>
                 </article>
 
                 <article class="panel table-panel">
@@ -133,6 +132,16 @@
                             </tr>
                         </tbody>
                     </table>
+                </article>
+
+                <article class="panel comparison-panel">
+                    <div class="section-heading">
+                        <p class="eyebrow">Performance View</p>
+                        <h2>Visual Comparison</h2>
+                    </div>
+                    <div id="comparisonBars" class="comparison-bars">
+                        <p class="empty-state">Run the simulator to compare algorithms visually.</p>
+                    </div>
                 </article>
 
                 <article class="panel detail-panel">

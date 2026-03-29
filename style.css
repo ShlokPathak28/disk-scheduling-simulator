@@ -82,7 +82,6 @@ h2 {
 .field input,
 .field select,
 .metric-card span,
-.chart-placeholder,
 .empty-state,
 th,
 td {
@@ -219,16 +218,56 @@ td {
     color: var(--ink);
 }
 
-.chart-placeholder {
-    display: grid;
-    place-items: center;
-    min-height: 260px;
-    border: 1px dashed var(--line);
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+}
+
+.movement-chart {
+    width: 100%;
+    min-height: 320px;
+    border: 1px solid var(--line);
     border-radius: var(--radius-md);
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 241, 233, 0.92));
-    text-align: center;
-    padding: 20px;
+        linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(247, 241, 233, 0.95));
+}
+
+.grid-line {
+    stroke: rgba(24, 35, 50, 0.12);
+    stroke-width: 1;
+}
+
+.axis-label {
+    fill: var(--muted);
+    font-size: 12px;
+}
+
+.path-line {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.path-point {
+    stroke: #fffdf8;
+    stroke-width: 2;
 }
 
 .result-table {
@@ -251,6 +290,67 @@ th {
 
 .empty-state {
     text-align: center;
+}
+
+.comparison-bars {
+    display: grid;
+    gap: 14px;
+}
+
+.comparison-item {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.78);
+    padding: 16px;
+}
+
+.comparison-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.comparison-top strong {
+    font-size: 1rem;
+}
+
+.comparison-badge {
+    border-radius: 999px;
+    background: rgba(180, 88, 51, 0.12);
+    color: var(--accent);
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.bar-metric {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.bar-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.bar-track {
+    position: relative;
+    overflow: hidden;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(24, 35, 50, 0.08);
+}
+
+.bar-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: inherit;
 }
 
 .result-detail {
