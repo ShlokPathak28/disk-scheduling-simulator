@@ -126,7 +126,7 @@ const schedulerBlueprint = {
         maxCylinder: 199,
         direction: "right"
     },
-    projectStage: "day-2-algorithms"
+    projectStage: "final-project"
 };
 
 const diskSchedulingAlgorithms = {

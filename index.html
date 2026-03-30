@@ -3,159 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disk Scheduling Simulator</title>
+    <title>Precision Lab | Disk Scheduling Simulator</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <main class="app-shell">
-        <section class="hero-panel">
-            <div>
-                <p class="eyebrow">Day 4 Progress</p>
-                <h1>Disk Scheduling Simulator</h1>
-                <p class="lead">
-                    Base interface and project structure for running `FCFS`, `SSTF`, `SCAN`, and `C-SCAN`
-                    with custom disk requests.
-                </p>
-            </div>
-            <div class="hero-badges">
-                <span class="badge">UI Connected</span>
-                <span class="badge">Visualization Ready</span>
-                <span class="badge">Algorithms Ready</span>
-            </div>
-        </section>
-
-        <section class="workspace">
-            <aside class="panel control-panel">
-                <div class="section-heading">
-                    <p class="eyebrow">Controls</p>
-                    <h2>Simulation Input</h2>
+    <div class="page-shell">
+        <header class="topbar">
+            <div class="brand-lockup">
+                <span class="brand-mark">PL</span>
+                <div>
+                    <p class="brand-kicker">Precision Lab</p>
+                    <h1>Disk Scheduling Simulator</h1>
                 </div>
+            </div>
+            <div class="topbar-meta">
+                <span class="meta-chip">Interactive UI</span>
+                <span class="meta-chip">Live Analysis</span>
+            </div>
+        </header>
 
-                <form id="setupForm" class="form-grid">
-                    <label class="field">
-                        <span>Request Queue</span>
-                        <textarea id="requestQueue" rows="5" placeholder="98, 183, 37, 122, 14, 124, 65, 67"></textarea>
-                    </label>
-
-                    <div class="field-row">
-                        <label class="field">
-                            <span>Initial Head</span>
-                            <input id="headPosition" type="number" value="53" min="0">
-                        </label>
-                        <label class="field">
-                            <span>Max Cylinder</span>
-                            <input id="maxCylinder" type="number" value="199" min="1">
-                        </label>
-                    </div>
-
-                    <div class="field-row">
-                        <label class="field">
-                            <span>Direction</span>
-                            <select id="direction">
-                                <option value="right">Right</option>
-                                <option value="left">Left</option>
-                            </select>
-                        </label>
-                        <label class="field">
-                            <span>Algorithm</span>
-                            <select id="algorithm">
-                                <option value="ALL">Compare All</option>
-                                <option value="FCFS">FCFS</option>
-                                <option value="SSTF">SSTF</option>
-                                <option value="SCAN">SCAN</option>
-                                <option value="C-SCAN">C-SCAN</option>
-                            </select>
-                        </label>
-                    </div>
-
-                    <div class="button-row">
-                        <button id="sampleButton" type="button" class="primary-button">Load Sample</button>
-                        <button id="resetButton" type="button" class="ghost-button">Reset</button>
-                        <button id="runButton" type="submit" class="primary-button">Run Simulation</button>
-                    </div>
-
-                    <p id="statusText" class="status-text">
-                        Day 2 is focused on implementing the scheduling algorithms. UI execution will be added next.
+        <main class="app-shell">
+            <section class="hero-panel">
+                <div class="hero-copy">
+                    <p class="eyebrow">Simulation Workspace</p>
+                    <h2>Evaluate disk scheduling head movement with a cleaner operator view.</h2>
+                    <p class="lead">
+                        Configure the request queue, choose an algorithm, and inspect seek distance,
+                        throughput, path progression, and result comparisons in one place.
                     </p>
-                </form>
-            </aside>
-
-            <section class="dashboard">
-                <article class="panel metrics-panel">
-                    <div class="section-heading">
-                        <p class="eyebrow">Output Area</p>
-                        <h2>Metrics Placeholder</h2>
+                </div>
+                <div class="hero-status">
+                    <div class="hero-stat">
+                        <span>Algorithms</span>
+                        <strong>FCFS, SSTF, SCAN, C-SCAN</strong>
                     </div>
-                    <div class="metric-grid">
-                        <div class="metric-card">
+                    <div class="hero-stat">
+                        <span>Visualization</span>
+                        <strong>Live path chart + ranked comparison</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="workspace">
+                <section class="panel control-panel">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">Parameters</p>
+                            <h3>Simulation Input</h3>
+                        </div>
+                        <span class="panel-tag">Manual Entry</span>
+                    </div>
+
+                    <form id="setupForm" class="form-grid">
+                        <label class="field field-wide">
+                            <span>Request Queue</span>
+                            <textarea id="requestQueue" rows="4" placeholder="98, 183, 37, 122, 14, 124, 65, 67"></textarea>
+                        </label>
+
+                        <div class="field-row">
+                            <label class="field">
+                                <span>Initial Head</span>
+                                <input id="headPosition" type="number" value="53" min="0">
+                            </label>
+                            <label class="field">
+                                <span>Max Cylinder</span>
+                                <input id="maxCylinder" type="number" value="199" min="1">
+                            </label>
+                        </div>
+
+                        <div class="field-row">
+                            <label class="field">
+                                <span>Direction</span>
+                                <select id="direction">
+                                    <option value="right">Right</option>
+                                    <option value="left">Left</option>
+                                </select>
+                                <small id="directionHint" class="field-note">Used by SCAN and C-SCAN during comparison.</small>
+                            </label>
+                            <div class="field algorithm-field">
+                                <span>Scheduling Algorithm</span>
+                                <div class="algorithm-pills" id="algorithmPills">
+                                    <button type="button" class="algorithm-pill is-active" data-algorithm="ALL">Compare All</button>
+                                    <button type="button" class="algorithm-pill" data-algorithm="FCFS">FCFS</button>
+                                    <button type="button" class="algorithm-pill" data-algorithm="SSTF">SSTF</button>
+                                    <button type="button" class="algorithm-pill" data-algorithm="SCAN">SCAN</button>
+                                    <button type="button" class="algorithm-pill" data-algorithm="C-SCAN">C-SCAN</button>
+                                </div>
+                                <small class="field-note">Choose one algorithm or compare the full set.</small>
+                                <input id="algorithm" type="hidden" value="ALL">
+                            </div>
+                        </div>
+
+                        <div class="button-row">
+                            <button id="sampleButton" type="button" class="ghost-button">Load Sample</button>
+                            <button id="resetButton" type="button" class="ghost-button">Reset</button>
+                            <button id="runButton" type="submit" class="primary-button">Execute Sequence</button>
+                        </div>
+
+                        <div class="status-stack">
+                            <p id="statusText" class="status-text">
+                                Enter the queue and run the simulator to compare disk scheduling behavior.
+                            </p>
+                            <p id="inputSummary" class="status-text status-text-subtle">
+                                Load the sample or enter your own queue, then run the simulator.
+                            </p>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="dashboard">
+                    <section class="metrics-column">
+                        <article class="metric-card metric-card-primary">
                             <span>Total Seek</span>
                             <strong id="totalSeekValue">--</strong>
-                        </div>
-                        <div class="metric-card">
+                            <small>Cylinder traversals</small>
+                        </article>
+                        <article class="metric-card metric-card-accent">
                             <span>Average Seek</span>
                             <strong id="averageSeekValue">--</strong>
-                        </div>
-                        <div class="metric-card">
+                            <small>Units per request</small>
+                        </article>
+                        <article class="metric-card metric-card-muted">
                             <span>Throughput</span>
                             <strong id="throughputValue">--</strong>
+                            <small>Requests per unit distance</small>
+                        </article>
+                    </section>
+
+                    <article class="panel chart-panel">
+                        <div class="section-heading">
+                            <div>
+                                <p class="eyebrow">Visualization</p>
+                                <h3>Head Movement Graph</h3>
+                            </div>
+                            <div id="chartLegend" class="chart-legend"></div>
                         </div>
-                    </div>
-                </article>
+                        <div class="chart-frame">
+                            <svg id="movementChart" class="movement-chart" viewBox="0 0 960 360" role="img" aria-label="Head movement graph"></svg>
+                        </div>
+                    </article>
 
-                <article class="panel chart-panel">
-                    <div class="section-heading">
-                        <p class="eyebrow">Visualization Area</p>
-                        <h2>Head Movement Graph</h2>
-                    </div>
-                    <div id="chartLegend" class="chart-legend"></div>
-                    <svg id="movementChart" class="movement-chart" viewBox="0 0 960 360" role="img" aria-label="Head movement graph"></svg>
-                </article>
+                    <div class="analysis-grid">
+                        <article class="panel comparison-panel">
+                            <div class="section-heading">
+                                <div>
+                                    <p class="eyebrow">Performance View</p>
+                                    <h3>Algorithm Comparison</h3>
+                                </div>
+                            </div>
+                            <div id="comparisonBars" class="comparison-bars">
+                                <p class="empty-state">Run the simulator to compare algorithms visually.</p>
+                            </div>
+                        </article>
 
-                <article class="panel table-panel">
-                    <div class="section-heading">
-                        <p class="eyebrow">Comparison Area</p>
-                        <h2>Results Table Placeholder</h2>
+                        <article class="panel detail-panel">
+                            <div class="section-heading">
+                                <div>
+                                    <p class="eyebrow">Result Details</p>
+                                    <h3>Selected Output</h3>
+                                </div>
+                            </div>
+                            <div id="resultDetail" class="result-detail">
+                                <p class="empty-state">Run the simulator to inspect service sequence and head path.</p>
+                            </div>
+                        </article>
                     </div>
-                    <table class="result-table">
-                        <thead>
-                            <tr>
-                                <th>Algorithm</th>
-                                <th>Sequence</th>
-                                <th>Total Seek</th>
-                                <th>Avg Seek</th>
-                                <th>Throughput</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultsTableBody">
-                            <tr>
-                                <td colspan="5" class="empty-state">Algorithm logic exists now, but Day 3 will wire these results into the interface.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </article>
 
-                <article class="panel comparison-panel">
-                    <div class="section-heading">
-                        <p class="eyebrow">Performance View</p>
-                        <h2>Visual Comparison</h2>
-                    </div>
-                    <div id="comparisonBars" class="comparison-bars">
-                        <p class="empty-state">Run the simulator to compare algorithms visually.</p>
-                    </div>
-                </article>
-
-                <article class="panel detail-panel">
-                    <div class="section-heading">
-                        <p class="eyebrow">Result Details</p>
-                        <h2>Selected Output</h2>
-                    </div>
-                    <div id="resultDetail" class="result-detail">
-                        <p class="empty-state">Run the simulator to inspect service sequence and head path.</p>
-                    </div>
-                </article>
+                    <article class="panel table-panel">
+                        <div class="section-heading">
+                            <div>
+                                <p class="eyebrow">Benchmark</p>
+                                <h3>Algorithm Results</h3>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="result-table">
+                                <thead>
+                                    <tr>
+                                        <th>Algorithm</th>
+                                        <th>Access Sequence</th>
+                                        <th>Total Seek</th>
+                                        <th>Avg Seek</th>
+                                        <th>Throughput</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultsTableBody">
+                                    <tr>
+                                        <td colspan="5" class="empty-state">Run the simulator to compare algorithm outputs.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </section>
             </section>
-        </section>
-    </main>
+        </main>
+    </div>
 
     <script src="algorithms.js"></script>
     <script src="app.js"></script>

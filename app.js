@@ -1,9 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
     const COLORS = {
-        FCFS: "#1f6f8b",
+        FCFS: "#0e4aa8",
         SSTF: "#b45833",
-        SCAN: "#4f772d",
-        "C-SCAN": "#7a4cc2"
+        SCAN: "#2f6a47",
+        "C-SCAN": "#6b4ed8"
     };
 
     const setupForm = document.getElementById("setupForm");
@@ -14,8 +14,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const headPosition = document.getElementById("headPosition");
     const maxCylinder = document.getElementById("maxCylinder");
     const direction = document.getElementById("direction");
+    const directionHint = document.getElementById("directionHint");
     const algorithm = document.getElementById("algorithm");
+    const algorithmPills = document.getElementById("algorithmPills");
     const statusText = document.getElementById("statusText");
+    const inputSummary = document.getElementById("inputSummary");
     const totalSeekValue = document.getElementById("totalSeekValue");
     const averageSeekValue = document.getElementById("averageSeekValue");
     const throughputValue = document.getElementById("throughputValue");
@@ -35,6 +38,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function formatNumber(value, digits = 2) {
         return Number(value).toFixed(digits);
+    }
+
+    function setActiveAlgorithm(selectedAlgorithm) {
+        algorithm.value = selectedAlgorithm;
+        algorithmPills.querySelectorAll(".algorithm-pill").forEach((pill) => {
+            pill.classList.toggle("is-active", pill.dataset.algorithm === selectedAlgorithm);
+        });
+    }
+
+    function updateControlState() {
+        const selectedAlgorithm = algorithm.value;
+
+        if (selectedAlgorithm === "FCFS" || selectedAlgorithm === "SSTF") {
+            direction.disabled = true;
+            directionHint.textContent = "Direction is ignored for FCFS and SSTF.";
+            return;
+        }
+
+        direction.disabled = false;
+        directionHint.textContent = selectedAlgorithm === "ALL"
+            ? "Used by SCAN and C-SCAN during comparison."
+            : "Used by SCAN and C-SCAN.";
     }
 
     function renderEmptyResults() {
@@ -114,9 +139,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderResults(results) {
         const firstResult = results[0];
+        const bestBySeek = [...results].sort((left, right) => left.totalSeekDistance - right.totalSeekDistance)[0];
+
         totalSeekValue.textContent = firstResult.totalSeekDistance;
         averageSeekValue.textContent = formatNumber(firstResult.averageSeekTime);
         throughputValue.textContent = formatNumber(firstResult.throughput, 4);
+        inputSummary.textContent = results.length === 1
+            ? `${firstResult.algorithm} result shown. Head path visualization is active.`
+            : `${results.length} algorithm results shown. Lowest seek distance: ${bestBySeek.algorithm}.`;
 
         resultsTableBody.innerHTML = results.map((result) => `
             <tr>
@@ -133,6 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p><strong>${result.algorithm}</strong></p>
                 <p><strong>Service sequence:</strong> ${result.sequence.join(" -> ")}</p>
                 <p><strong>Head path:</strong> ${result.path.join(" -> ")}</p>
+                <p><strong>Total seek distance:</strong> ${result.totalSeekDistance}</p>
             </div>
         `).join("");
 
@@ -233,13 +264,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }).join("");
     }
 
+    algorithmPills.addEventListener("click", (event) => {
+        const pill = event.target.closest(".algorithm-pill");
+
+        if (!pill) {
+            return;
+        }
+
+        setActiveAlgorithm(pill.dataset.algorithm);
+        updateControlState();
+    });
+
     sampleButton.addEventListener("click", () => {
         requestQueue.value = "98, 183, 37, 122, 14, 124, 65, 67";
         headPosition.value = "53";
         maxCylinder.value = "199";
         direction.value = "right";
-        algorithm.value = "ALL";
-        statusText.textContent = "Sample input loaded. Click Run Simulation to test the connected UI.";
+        setActiveAlgorithm("ALL");
+        updateControlState();
+        statusText.textContent = "Sample input loaded. Click Execute Sequence to compare the algorithms.";
+        inputSummary.textContent = "Sample queue loaded and ready to run.";
     });
 
     resetButton.addEventListener("click", () => {
@@ -247,8 +291,10 @@ document.addEventListener("DOMContentLoaded", () => {
         headPosition.value = "53";
         maxCylinder.value = "199";
         direction.value = "right";
-        algorithm.value = "ALL";
-        statusText.textContent = "Inputs reset. Day 3 connects the form to real results.";
+        setActiveAlgorithm("ALL");
+        updateControlState();
+        statusText.textContent = "Inputs reset. Enter a queue or load the sample to continue.";
+        inputSummary.textContent = "Load the sample or enter your own queue, then run the simulator.";
         renderEmptyResults();
     });
 
@@ -264,9 +310,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        statusText.textContent = "Day 4 complete: the simulator now visualizes head movement and compares algorithm performance.";
+        statusText.textContent = "Simulation complete. Review the metrics, graph, and benchmark output below.";
         renderResults(results);
     });
 
+    updateControlState();
     renderEmptyResults();
 });
