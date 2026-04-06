@@ -104,3 +104,7 @@ The interface is organized into:
 GitHub repository:
 
 `https://github.com/ShlokPathak28/disk-scheduling-simulator`
+
+## Contributors
+
+- Ayush16012005
