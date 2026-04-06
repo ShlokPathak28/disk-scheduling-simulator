@@ -486,14 +486,30 @@ td,
 }
 
 .grid-line {
-    stroke: rgba(21, 32, 51, 0.12);
+    stroke: rgba(21, 32, 51, 0.08);
     stroke-width: 1;
+    stroke-dasharray: 6 4;
 }
 
 .axis-label {
     fill: #708099;
     font-family: "Instrument Sans", sans-serif;
+    font-size: 11px;
+}
+
+.axis-title {
+    font-weight: 600;
     font-size: 12px;
+    fill: #5a667a;
+}
+
+.path-area {
+    opacity: 0;
+    animation: fadeAreaIn 0.8s ease forwards;
+}
+
+@keyframes fadeAreaIn {
+    to { opacity: 1; }
 }
 
 .path-line {
@@ -501,11 +517,47 @@ td,
     stroke-width: 3;
     stroke-linecap: round;
     stroke-linejoin: round;
+    transition: stroke-width 0.2s ease;
+}
+
+.path-line.animate-draw {
+    animation: drawLine 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes drawLine {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.path-point-ring {
+    transition: opacity 0.2s ease, r 0.2s ease;
 }
 
 .path-point {
     stroke: #f8fbff;
     stroke-width: 2;
+    cursor: pointer;
+    transition: r 0.2s ease, filter 0.2s ease;
+}
+
+.path-point:hover {
+    r: 7;
+    filter: drop-shadow(0 0 6px currentColor);
+}
+
+.path-point:hover + .point-label,
+.point-label:hover {
+    opacity: 1;
+}
+
+.point-label {
+    font-family: "Sora", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
 }
 
 .analysis-grid {
@@ -570,6 +622,40 @@ td,
     position: absolute;
     inset: 0 auto 0 0;
     border-radius: inherit;
+    transition: width 0.15s ease;
+}
+
+.bar-fill-animated {
+    width: 0% !important;
+    animation: growBar 1s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards;
+}
+
+@keyframes growBar {
+    to {
+        width: var(--target-width) !important;
+    }
+}
+
+.winner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.comparison-item-best {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.06), rgba(255, 255, 255, 0.9));
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.1);
 }
 
 .detail-block + .detail-block {
