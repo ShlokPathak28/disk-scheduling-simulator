@@ -1,9 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
     const COLORS = {
-        FCFS: "#0e4aa8",
-        SSTF: "#b45833",
-        SCAN: "#2f6a47",
-        "C-SCAN": "#6b4ed8"
+        FCFS: "#3b82f6",
+        SSTF: "#f59e0b",
+        SCAN: "#10b981",
+        "C-SCAN": "#8b5cf6"
+    };
+
+    const COLORS_LIGHT = {
+        FCFS: "rgba(59,130,246,0.13)",
+        SSTF: "rgba(245,158,11,0.13)",
+        SCAN: "rgba(16,185,129,0.13)",
+        "C-SCAN": "rgba(139,92,246,0.13)"
     };
 
     const setupForm = document.getElementById("setupForm");
@@ -191,8 +198,32 @@ document.addEventListener("DOMContentLoaded", () => {
         const xStep = longestPath > 1 ? innerWidth / (longestPath - 1) : innerWidth;
         const maxValue = Number(maxCylinder.value);
         const yScale = maxValue > 0 ? innerHeight / maxValue : innerHeight;
-        let markup = "";
+        let defs = `<defs>`;
 
+        // Glow filter
+        defs += `
+            <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>`;
+
+        // Gradient fills per algorithm
+        results.forEach((result) => {
+            const id = result.algorithm.replace("-", "");
+            defs += `
+                <linearGradient id="grad_${id}" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="${COLORS[result.algorithm]}" stop-opacity="0.28"/>
+                    <stop offset="100%" stop-color="${COLORS[result.algorithm]}" stop-opacity="0.02"/>
+                </linearGradient>`;
+        });
+        defs += `</defs>`;
+
+        let markup = defs;
+
+        // Dashed horizontal grid lines
         for (let tick = 0; tick <= 4; tick += 1) {
             const yValue = Math.round((maxValue / 4) * tick);
             const y = padding.top + innerHeight - (yValue * yScale);
@@ -200,45 +231,75 @@ document.addEventListener("DOMContentLoaded", () => {
             markup += `<text class="axis-label" x="${padding.left - 12}" y="${y + 4}" text-anchor="end">${yValue}</text>`;
         }
 
+        // Dashed vertical grid lines
         for (let step = 0; step < longestPath; step += 1) {
             const x = padding.left + step * xStep;
             markup += `<line class="grid-line" x1="${x}" y1="${padding.top}" x2="${x}" y2="${height - padding.bottom}"></line>`;
             markup += `<text class="axis-label" x="${x}" y="${height - 12}" text-anchor="middle">${step}</text>`;
         }
 
-        markup += `<text class="axis-label" x="${width / 2}" y="${height - 4}" text-anchor="middle">Service Step</text>`;
-        markup += `<text class="axis-label" x="16" y="${height / 2}" text-anchor="middle" transform="rotate(-90 16 ${height / 2})">Cylinder</text>`;
+        markup += `<text class="axis-label axis-title" x="${width / 2}" y="${height - 2}" text-anchor="middle">Service Step</text>`;
+        markup += `<text class="axis-label axis-title" x="16" y="${height / 2}" text-anchor="middle" transform="rotate(-90 16 ${height / 2})">Cylinder</text>`;
 
-        results.forEach((result) => {
+        // Render each algorithm
+        results.forEach((result, idx) => {
+            const id = result.algorithm.replace("-", "");
             const points = result.path.map((value, index) => {
                 const x = padding.left + index * xStep;
                 const y = padding.top + innerHeight - (value * yScale);
                 return { x, y, value };
             });
 
-            markup += `<polyline class="path-line" points="${points.map((point) => `${point.x},${point.y}`).join(" ")}" stroke="${COLORS[result.algorithm]}"></polyline>`;
+            const polyStr = points.map((p) => `${p.x},${p.y}`).join(" ");
+
+            // Area fill
+            const bottomY = padding.top + innerHeight;
+            const areaStr = `${points[0].x},${bottomY} ${polyStr} ${points[points.length - 1].x},${bottomY}`;
+            markup += `<polygon class="path-area" points="${areaStr}" fill="url(#grad_${id})"></polygon>`;
+
+            // Animated line
+            markup += `<polyline class="path-line" points="${polyStr}" stroke="${COLORS[result.algorithm]}" filter="url(#glow)" style="animation-delay:${idx * 0.18}s"></polyline>`;
+
+            // Points with outer ring + value label
             markup += points.map((point) => `
-                <circle class="path-point" cx="${point.x}" cy="${point.y}" r="4.5" fill="${COLORS[result.algorithm]}">
+                <circle class="path-point-ring" cx="${point.x}" cy="${point.y}" r="9" stroke="${COLORS[result.algorithm]}" fill="none" stroke-width="1.5" opacity="0.25"/>
+                <circle class="path-point" cx="${point.x}" cy="${point.y}" r="5" fill="${COLORS[result.algorithm]}">
                     <title>${result.algorithm}: cylinder ${point.value}</title>
                 </circle>
+                <text class="point-label" x="${point.x}" y="${point.y - 14}" text-anchor="middle" fill="${COLORS[result.algorithm]}">${point.value}</text>
             `).join("");
         });
 
         movementChart.innerHTML = markup;
+
+        // Calculate total path length for each polyline to drive stroke animation
+        requestAnimationFrame(() => {
+            movementChart.querySelectorAll(".path-line").forEach((line) => {
+                const length = line.getTotalLength();
+                line.style.strokeDasharray = length;
+                line.style.strokeDashoffset = length;
+                line.classList.add("animate-draw");
+            });
+        });
     }
 
     function renderComparisonBars(results) {
         const maxSeek = Math.max(...results.map((result) => result.totalSeekDistance), 1);
         const maxThroughput = Math.max(...results.map((result) => result.throughput), 1);
+        const bestAlgo = [...results].sort((a, b) => a.totalSeekDistance - b.totalSeekDistance)[0]?.algorithm;
 
         comparisonBars.innerHTML = results.map((result) => {
             const seekWidth = (result.totalSeekDistance / maxSeek) * 100;
             const throughputWidth = (result.throughput / maxThroughput) * 100;
+            const isBest = result.algorithm === bestAlgo && results.length > 1;
+            const winnerBadge = isBest
+                ? `<span class="winner-badge">★ Best</span>`
+                : "";
 
             return `
-                <article class="comparison-item">
+                <article class="comparison-item${isBest ? " comparison-item-best" : ""}">
                     <div class="comparison-top">
-                        <strong>${result.algorithm}</strong>
+                        <strong>${result.algorithm} ${winnerBadge}</strong>
                         <span class="comparison-badge">${result.totalSeekDistance} seek</span>
                     </div>
                     <div class="bar-metric">
@@ -247,7 +308,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <span>${result.totalSeekDistance}</span>
                         </div>
                         <div class="bar-track">
-                            <span class="bar-fill" style="width:${seekWidth}%; background:${COLORS[result.algorithm]};"></span>
+                            <span class="bar-fill bar-fill-animated" style="--target-width:${seekWidth}%; background:linear-gradient(90deg, ${COLORS[result.algorithm]}, ${COLORS[result.algorithm]}cc);"></span>
                         </div>
                     </div>
                     <div class="bar-metric">
@@ -256,7 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <span>${formatNumber(result.throughput, 4)}</span>
                         </div>
                         <div class="bar-track">
-                            <span class="bar-fill" style="width:${throughputWidth}%; background:${COLORS[result.algorithm]};"></span>
+                            <span class="bar-fill bar-fill-animated" style="--target-width:${throughputWidth}%; background:linear-gradient(90deg, ${COLORS[result.algorithm]}, ${COLORS[result.algorithm]}cc);"></span>
                         </div>
                     </div>
                 </article>
