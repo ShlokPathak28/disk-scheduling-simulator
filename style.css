@@ -52,10 +52,10 @@ body {
     min-height: 100vh;
     color: var(--text);
     font-family: "Instrument Sans", sans-serif;
-    background: var(--bg);
-}
-body, .panel, .metric-card, .topbar {
-    transition: background 0.3s ease, color 0.3s ease;
+    background:
+        radial-gradient(circle at top left, rgba(14, 74, 168, 0.16), transparent 25%),
+        radial-gradient(circle at 90% 10%, rgba(154, 74, 22, 0.12), transparent 18%),
+        linear-gradient(180deg, #f5f8fc 0%, var(--bg) 100%);
 }
 
 h1,
