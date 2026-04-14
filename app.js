@@ -5,28 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
         SCAN: "#10b981",
         "C-SCAN": "#8b5cf6"
     };
-    const toggleBtn = document.getElementById("themeToggle");
-
-// Load saved theme
-const savedTheme = localStorage.getItem("theme");
-if (savedTheme === "dark") {
-    document.documentElement.setAttribute("data-theme", "dark");
-    toggleBtn.textContent = "☀️ Light";
-}
-
-toggleBtn.addEventListener("click", () => {
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-
-    if (isDark) {
-        document.documentElement.removeAttribute("data-theme");
-        toggleBtn.textContent = "🌙 Dark";
-        localStorage.setItem("theme", "light");
-    } else {
-        document.documentElement.setAttribute("data-theme", "dark");
-        toggleBtn.textContent = "☀️ Light";
-        localStorage.setItem("theme", "dark");
-    }
-});
 
     const COLORS_LIGHT = {
         FCFS: "rgba(59,130,246,0.13)",
